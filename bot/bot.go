@@ -32,7 +32,11 @@ func Start(cfg *config.Config) {
 func StartHandler(b *telebot.Bot) func(*telebot.Message) {
 	return func(m *telebot.Message) {
 		logger.Log.Info(fmt.Sprintf("Received %v command from user %s", m.Text, m.Sender.Username))
-		b.Send(m.Sender, "Для поиска артикулов на WB напишите поисковый запрос в чат")
+		_, err := b.Send(m.Sender, "Для поиска артикулов на WB напишите поисковый запрос в чат")
+		if err != nil {
+			logger.Log.Error(err.Error())
+			return
+		}
 	}
 }
 
@@ -42,7 +46,11 @@ func SearchHandler(b *telebot.Bot) func(*telebot.Message) {
 		response, err := wb.GetProductIDs(m.Text)
 		if err != nil {
 			logger.Log.Error(fmt.Sprintf("Error occurred while searching for product IDs: %v", err))
-			b.Send(m.Sender, "Что-то пошло не так")
+			_, err := b.Send(m.Sender, "Что-то пошло не так")
+			if err != nil {
+				logger.Log.Error(err.Error())
+				return
+			}
 			return
 		}
 		stringSlice := make([]string, len(response))
@@ -50,6 +58,10 @@ func SearchHandler(b *telebot.Bot) func(*telebot.Message) {
 			stringSlice[i] = strconv.Itoa(num)
 		}
 		logger.Log.Info(fmt.Sprintf("Found %d product IDs for query '%s'", len(response), m.Text))
-		b.Send(m.Sender, strings.Join(stringSlice, "\n"))
+		_, err = b.Send(m.Sender, strings.Join(stringSlice, "\n"))
+		if err != nil {
+			logger.Log.Error(err.Error())
+			return
+		}
 	}
 }

@@ -6,12 +6,13 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"wb-bot/logger"
 )
 
 func GetProductIDs(query string) ([]int, error) {
 	client := &http.Client{}
-	url := fmt.Sprintf("https://search.wb.ru/exactmatch/ru/common/v5/search?ab_testing=false&appType=1&dest=-1257786&query=%s&resultset=catalog&sort=popular&spp=30&suppressSpellcheck=false", url.QueryEscape(query))
-	req, err := http.NewRequest("GET", url, nil)
+	searchUrl := fmt.Sprintf("https://search.wb.ru/exactmatch/ru/common/v5/search?ab_testing=false&appType=1&dest=-1257786&query=%s&resultset=catalog&sort=popular&spp=30&suppressSpellcheck=false", url.QueryEscape(query))
+	req, err := http.NewRequest("GET", searchUrl, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +24,12 @@ func GetProductIDs(query string) ([]int, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			logger.Log.Error(err.Error())
+		}
+	}(resp.Body)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
